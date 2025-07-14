@@ -1,5 +1,5 @@
 nvcc = nvcc
-nvccflag = -std=c++11 -O3 -arch=sm_61 -DHEAP_SORT
+nvccflag = -std=c++11 -O3 -arch=native
 heappath = ../new_impl
 
 all: uheap_synthetic

@@ -128,6 +128,8 @@ int main(int argc, char *argv[])
     int smemSize = batchSize * 3 * sizeof(int) + batchSize * 3 * sizeof(int);
     smemSize += (blockSize + 1) * sizeof(int) + 2 * batchSize * sizeof(int) + 2 * batchSize * sizeof(int);
 
+    printf("[START] insertion.\n");
+
     // concurrent insetion
     setTime(&startTime);
 
@@ -137,6 +139,8 @@ int main(int argc, char *argv[])
 
     setTime(&endTime);
     insertTime = getTime(&startTime, &endTime);
+
+    printf("[END] insertion.\n");
 
     // concurrent deletion
     setTime(&startTime);
