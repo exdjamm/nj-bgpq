@@ -392,7 +392,6 @@ public:
         {
             *tmpOldIndex = atomicAdd(batch_count, 1);
             atomicChangeStatus(&batch_status[*tmpOldIndex], AVAIL, INUSE);
-            atomicChangeStatus(&batch_status[0], AVAIL, INUSE);
         }
         __syncthreads();
 
@@ -411,8 +410,9 @@ public:
         __syncthreads();
 
         int lesser = has_between(heap + father_idx * batch_size, heap + current_idx * batch_size);
+        int run = lesser && (current_idx != father_idx);
 
-        while (lesser)
+        while (run)
         {
             if (threadIdx.x == 0)
             {
@@ -447,6 +447,7 @@ public:
             current_idx = father_idx;
             father_idx = current_idx / 2;
             lesser = has_between(heap + father_idx * batch_size, heap + current_idx * batch_size);
+            run = lesser && (current_idx != father_idx);
             __syncthreads();
         }
 
