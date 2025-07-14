@@ -152,8 +152,8 @@ int main(int argc, char *argv[])
     setTime(&endTime);
     deleteTime = getTime(&startTime, &endTime);
 
-    printf("%s,insdel,%d,%dM,%.f,%.f,%.f\n",
-           argv[0] == std::string("./BGPQ_T") ? "BGPQ_T" : "BGPQ_B",
+    printf("%s,insdel,%d,%d,%.2f,%.2f,%.2f\n",
+           argv[0],
            keyType, arrayNum, insertTime, deleteTime, insertTime + deleteTime);
 
     cudaFree(heapItems);
