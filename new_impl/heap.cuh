@@ -405,7 +405,12 @@ public:
 
         if (current_idx == 0)
         {
-            atomicChangeStatus(&batch_status[current_idx], INUSE, AVAIL);
+
+            if (threadIdx.x == 0)
+            {
+                atomicChangeStatus(&batch_status[current_idx], INUSE, AVAIL);
+            }
+
             __syncthreads();
             return;
         }
