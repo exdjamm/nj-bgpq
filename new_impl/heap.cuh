@@ -403,6 +403,13 @@ public:
                   heap_aux + current_idx * batch_size, items_aux_1,
                   batch_size);
 
+        if (current_idx == 0)
+        {
+            atomicChangeStatus(&batch_status[current_idx], INUSE, AVAIL);
+            __syncthreads();
+            return;
+        }
+
         if (threadIdx.x == 0)
         {
             atomicChangeStatus(&batch_status[current_idx], INUSE, INSHOLD);
@@ -441,15 +448,13 @@ public:
             }
             __syncthreads();
 
-            if (father_idx == 0)
-                break;
-
             current_idx = father_idx;
             father_idx = current_idx / 2;
             lesser = has_between(heap + father_idx * batch_size, heap + current_idx * batch_size);
             run = lesser && (current_idx != father_idx);
             __syncthreads();
         }
+        __syncthreads();
 
         if (threadIdx.x == 0)
         {
@@ -462,11 +467,11 @@ public:
 
 __device__ __inline__ int atomicForceInuse(int *status, int new_value)
 {
-    int value = new_value;
+    int value = INUSE;
 
-    while (value == new_value)
+    while (value == INUSE)
     {
-        value = atomicMax(status, new_value);
+        value = atomicMax(status, INUSE);
     }
     return value;
 }
