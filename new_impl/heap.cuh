@@ -146,18 +146,20 @@ public:
 
         if (threadIdx.x == 0)
         {
-            *tmpOldIndex = atomicSub(batch_count, 1);
-            if (*tmpOldIndex == 1)
-            {
-                atomicChangeStatus(&batch_status[0], INUSE, AVAIL);
-            }
+            *tmpOldIndex = atomicSub(batch_count, 1) - 1;
         }
         __syncthreads();
 
         // There is no more batchs
-        if (*tmpOldIndex == 1)
+        if (*tmpOldIndex <= 1)
+        {
+            if (threadIdx.x == 0)
+            {
+                atomicChangeStatus(&batch_status[0], INUSE, AVAIL);
+            }
+            __syncthreads();
             return;
-        __syncthreads();
+        }
 
         lastIndex = *tmpOldIndex;
         __syncthreads();
@@ -191,7 +193,20 @@ public:
         prev_status_left = prev_status_right = INUSE;
 
         if (left_idx >= *batch_count)
+        {
+            __syncthreads();
+            batchCopy(heap + currentIdx * batch_size, items_1,
+                      heap_aux + currentIdx * batch_size, items_aux_1,
+                      batch_size);
+
+            if (threadIdx.x == 0)
+            {
+                atomicChangeStatus(&batch_status[currentIdx], INUSE, AVAIL);
+            }
+            __syncthreads();
             return;
+        }
+        __syncthreads();
 
         if (threadIdx.x == 0)
         {
@@ -202,21 +217,30 @@ public:
         }
         __syncthreads();
 
+        batchCopy(items_2, heap + left_idx * batch_size,
+                  items_aux_2, heap_aux + left_idx * batch_size,
+                  batch_size);
+
         if (right_idx >= *batch_count)
         {
             __syncthreads();
-            batchCopy(heap + currentIdx * batch_size, items_1,
-                      heap_aux + currentIdx * batch_size, items_aux_1,
-                      batch_size);
+            imergePath(items_1, items_2, heap + currentIdx * batch_size, heap + batch_size * left_idx,
+                       items_aux_1, items_aux_2, heap_aux + currentIdx * batch_size, heap_aux + left_idx * batch_size,
+                       batch_size, smOffset);
+
+            __syncthreads();
 
             if (threadIdx.x == 0)
             {
+                // atomicChangeStatus(&batch_status[left_idx], INUSE, AVAIL);
+                atomicChangeStatus(&batch_status[currentIdx], INUSE, curPrevStatus);
                 atomicChangeStatus(&batch_status[left_idx], INUSE, prev_status_left);
             }
             __syncthreads();
 
             return;
         }
+        __syncthreads();
 
         if (threadIdx.x == 0)
         {
@@ -226,10 +250,6 @@ public:
                 prev_status_right = DELMOD;
         }
         __syncthreads();
-
-        batchCopy(items_2, heap + left_idx * batch_size,
-                  items_aux_2, heap_aux + left_idx * batch_size,
-                  batch_size);
 
         batchCopy(items_3, heap + right_idx * batch_size,
                   items_aux_3, heap_aux + right_idx * batch_size,
@@ -261,7 +281,7 @@ public:
             }
             __syncthreads();
 
-            /* CASOS A PARTE */
+            /* CASOS ENTRE ITEM_1 E 2 */
             if (items_1[0] >= items_2[batch_size - 1])
             {
                 __syncthreads();
@@ -306,7 +326,21 @@ public:
             prev_status_left = prev_status_right = INUSE;
 
             if (left_idx >= *batch_count)
+            {
+                __syncthreads();
+
+                batchCopy(heap + currentIdx * batch_size, items_1,
+                          heap_aux + currentIdx * batch_size, items_aux_1,
+                          batch_size);
+
+                if (threadIdx.x == 0)
+                {
+                    atomicChangeStatus(&batch_status[currentIdx], INUSE, curPrevStatus);
+                }
+                __syncthreads();
                 break;
+            }
+            __syncthreads();
 
             if (threadIdx.x == 0)
             {
@@ -317,16 +351,23 @@ public:
             }
             __syncthreads();
 
+            batchCopy(items_2, heap + left_idx * batch_size,
+                      items_aux_2, heap_aux + left_idx * batch_size,
+                      batch_size);
+
             if (right_idx >= *batch_count)
             {
                 __syncthreads();
-                batchCopy(heap + currentIdx * batch_size, items_1,
-                          heap_aux + currentIdx * batch_size, items_aux_1,
-                          batch_size);
+                imergePath(items_1, items_2, heap + currentIdx * batch_size, heap + batch_size * left_idx,
+                           items_aux_1, items_aux_2, heap_aux + currentIdx * batch_size, heap_aux + left_idx * batch_size,
+                           batch_size, smOffset);
+
+                __syncthreads();
 
                 if (threadIdx.x == 0)
                 {
                     atomicChangeStatus(&batch_status[left_idx], INUSE, prev_status_left);
+                    atomicChangeStatus(&batch_status[currentIdx], INUSE, curPrevStatus);
                 }
                 __syncthreads();
 
@@ -341,10 +382,6 @@ public:
                     prev_status_right = DELMOD;
             }
             __syncthreads();
-
-            batchCopy(items_2, heap + left_idx * batch_size,
-                      items_aux_2, heap_aux + left_idx * batch_size,
-                      batch_size);
 
             batchCopy(items_3, heap + right_idx * batch_size,
                       items_aux_3, heap_aux + right_idx * batch_size,
