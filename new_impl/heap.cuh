@@ -211,9 +211,6 @@ public:
         if (threadIdx.x == 0)
         {
             prev_status_left = atomicForceInuse(&batch_status[left_idx], INUSE);
-
-            if (prev_status_left == INSHOLD)
-                prev_status_left = DELMOD;
         }
         __syncthreads();
 
@@ -245,9 +242,6 @@ public:
         if (threadIdx.x == 0)
         {
             prev_status_right = atomicForceInuse(&batch_status[right_idx], INUSE);
-
-            if (prev_status_right == INSHOLD)
-                prev_status_right = DELMOD;
         }
         __syncthreads();
 
@@ -345,9 +339,6 @@ public:
             if (threadIdx.x == 0)
             {
                 prev_status_left = atomicForceInuse(&batch_status[left_idx], INUSE);
-
-                if (prev_status_left == INSHOLD)
-                    prev_status_left = DELMOD;
             }
             __syncthreads();
 
@@ -377,9 +368,6 @@ public:
             if (threadIdx.x == 0)
             {
                 prev_status_right = atomicForceInuse(&batch_status[right_idx], INUSE);
-
-                if (prev_status_right == INSHOLD)
-                    prev_status_right = DELMOD;
             }
             __syncthreads();
 
