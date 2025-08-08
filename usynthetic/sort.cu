@@ -95,6 +95,8 @@ int main(int argc, char *argv[])
 
     int *oriItems = new int[arrayNum];
 
+    srand(0);
+
     for (int i = 0; i < arrayNum; ++i)
     {
         oriItems[i] = rand() % INT_MAX;
