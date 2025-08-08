@@ -1,7 +1,7 @@
 nvcc = nvcc
 nvccflag = -std=c++11 -O3 -arch=native
 nvcc_infoflag = -std=c++11 -g -G -arch=native
-heappath = ../new_impl
+heappath = ../
 
 all: uheap_synthetic uheap_synthetic_debug
 
