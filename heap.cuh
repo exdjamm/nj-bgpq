@@ -119,7 +119,7 @@ public:
 
         size = batch_size;
 
-        batchCopy(items, heap, aux_items, heap_aux, batch_size);
+        batchCopy<K, A>(items, heap, aux_items, heap_aux, batch_size);
 
         return true;
     }
@@ -138,9 +138,9 @@ public:
         K *items_2 = items_sm + batch_size;
         K *items_3 = items_sm + 2 * batch_size;
 
-        K *items_aux_1 = items_aux_sm;
-        K *items_aux_2 = items_aux_sm + batch_size;
-        K *items_aux_3 = items_aux_sm + 2 * batch_size;
+        A *items_aux_1 = items_aux_sm;
+        A *items_aux_2 = items_aux_sm + batch_size;
+        A *items_aux_3 = items_aux_sm + 2 * batch_size;
 
         int lastIndex;
 
@@ -172,9 +172,9 @@ public:
         __syncthreads();
 
         // Copy lastIndex to SM
-        batchCopy(items_1, heap + lastIndex * batch_size,
-                  items_aux_1, heap_aux + lastIndex * batch_size,
-                  batch_size, true, k_init_limit);
+        batchCopy<K, A>(items_1, heap + lastIndex * batch_size,
+                        items_aux_1, heap_aux + lastIndex * batch_size,
+                        batch_size, true, k_init_limit);
 
         if (threadIdx.x == 0)
         {
@@ -195,9 +195,9 @@ public:
         if (left_idx >= *batch_count)
         {
             __syncthreads();
-            batchCopy(heap + currentIdx * batch_size, items_1,
-                      heap_aux + currentIdx * batch_size, items_aux_1,
-                      batch_size);
+            batchCopy<K, A>(heap + currentIdx * batch_size, items_1,
+                            heap_aux + currentIdx * batch_size, items_aux_1,
+                            batch_size);
 
             if (threadIdx.x == 0)
             {
@@ -214,9 +214,9 @@ public:
         }
         __syncthreads();
 
-        batchCopy(items_2, heap + left_idx * batch_size,
-                  items_aux_2, heap_aux + left_idx * batch_size,
-                  batch_size);
+        batchCopy<K, A>(items_2, heap + left_idx * batch_size,
+                        items_aux_2, heap_aux + left_idx * batch_size,
+                        batch_size);
 
         if (right_idx >= *batch_count)
         {
@@ -245,9 +245,9 @@ public:
         }
         __syncthreads();
 
-        batchCopy(items_3, heap + right_idx * batch_size,
-                  items_aux_3, heap_aux + right_idx * batch_size,
-                  batch_size);
+        batchCopy<K, A>(items_3, heap + right_idx * batch_size,
+                        items_aux_3, heap_aux + right_idx * batch_size,
+                        batch_size);
 
         less = has_between(items_1, items_2) || has_between(items_1, items_3);
         __syncthreads();
@@ -279,16 +279,16 @@ public:
             if (items_1[0] >= items_2[batch_size - 1])
             {
                 __syncthreads();
-                batchCopy(heap + currentIdx * batch_size, items_2,
-                          heap_aux + currentIdx * batch_size, items_aux_2, batch_size);
+                batchCopy<K, A>(heap + currentIdx * batch_size, items_2,
+                                heap_aux + currentIdx * batch_size, items_aux_2, batch_size);
             }
             else if (items_1[batch_size - 1] < items_2[0])
             {
                 __syncthreads();
-                batchCopy(heap + currentIdx * batch_size, items_1,
-                          heap_aux + currentIdx * batch_size, items_aux_1, batch_size);
-                batchCopy(heap + new_idx * batch_size, items_2,
-                          heap_aux + new_idx * batch_size, items_aux_2, batch_size);
+                batchCopy<K, A>(heap + currentIdx * batch_size, items_1,
+                                heap_aux + currentIdx * batch_size, items_aux_1, batch_size);
+                batchCopy<K, A>(heap + new_idx * batch_size, items_2,
+                                heap_aux + new_idx * batch_size, items_aux_2, batch_size);
                 if (threadIdx.x == 0)
                 {
                     atomicChangeStatus(&batch_status[currentIdx], INUSE, curPrevStatus);
@@ -323,9 +323,9 @@ public:
             {
                 __syncthreads();
 
-                batchCopy(heap + currentIdx * batch_size, items_1,
-                          heap_aux + currentIdx * batch_size, items_aux_1,
-                          batch_size);
+                batchCopy<K, A>(heap + currentIdx * batch_size, items_1,
+                                heap_aux + currentIdx * batch_size, items_aux_1,
+                                batch_size);
 
                 if (threadIdx.x == 0)
                 {
@@ -342,9 +342,9 @@ public:
             }
             __syncthreads();
 
-            batchCopy(items_2, heap + left_idx * batch_size,
-                      items_aux_2, heap_aux + left_idx * batch_size,
-                      batch_size);
+            batchCopy<K, A>(items_2, heap + left_idx * batch_size,
+                            items_aux_2, heap_aux + left_idx * batch_size,
+                            batch_size);
 
             if (right_idx >= *batch_count)
             {
@@ -371,9 +371,9 @@ public:
             }
             __syncthreads();
 
-            batchCopy(items_3, heap + right_idx * batch_size,
-                      items_aux_3, heap_aux + right_idx * batch_size,
-                      batch_size);
+            batchCopy<K, A>(items_3, heap + right_idx * batch_size,
+                            items_aux_3, heap_aux + right_idx * batch_size,
+                            batch_size);
 
             less = has_between(items_1, items_2) || has_between(items_1, items_3);
             __syncthreads();
@@ -392,8 +392,8 @@ public:
         K *items_1 = items_sm;
         K *items_2 = items_sm + batch_size;
 
-        K *items_aux_1 = items_aux_sm;
-        K *items_aux_2 = items_aux_sm + batch_size;
+        A *items_aux_1 = items_aux_sm;
+        A *items_aux_2 = items_aux_sm + batch_size;
 
         for (int i = threadIdx.x; i < batch_size; i += blockDim.x)
         {
@@ -424,9 +424,9 @@ public:
         int father_idx = current_idx / 2;
         __syncthreads();
 
-        batchCopy(heap + current_idx * batch_size, items_1,
-                  heap_aux + current_idx * batch_size, items_aux_1,
-                  batch_size);
+        batchCopy<K, A>(heap + current_idx * batch_size, items_1,
+                        heap_aux + current_idx * batch_size, items_aux_1,
+                        batch_size);
 
         if (current_idx == 0)
         {
@@ -458,12 +458,12 @@ public:
             }
             __syncthreads();
 
-            batchCopy(items_1, heap + current_idx * batch_size,
-                      items_aux_1, heap_aux + current_idx * batch_size,
-                      batch_size);
-            batchCopy(items_2, heap + father_idx * batch_size,
-                      items_aux_2, heap_aux + father_idx * batch_size,
-                      batch_size);
+            batchCopy<K, A>(items_1, heap + current_idx * batch_size,
+                            items_aux_1, heap_aux + current_idx * batch_size,
+                            batch_size);
+            batchCopy<K, A>(items_2, heap + father_idx * batch_size,
+                            items_aux_2, heap_aux + father_idx * batch_size,
+                            batch_size);
 
             imergePath<K, A>(items_1, items_2, heap + father_idx * batch_size, heap + current_idx * batch_size,
                              items_aux_1, items_aux_2, heap_aux + father_idx * batch_size, heap_aux + current_idx * batch_size,
@@ -505,8 +505,5 @@ __device__ __inline__ int atomicForceInuse(int *status, int new_value)
     }
     return value;
 }
-
-template <typename K, typename A>
-__global__ void resetKAuxHeap(KAuxHeap<K, A> heap);
 
 #endif
