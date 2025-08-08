@@ -143,6 +143,7 @@ int main(int argc, char *argv[])
     printf("[END] insertion.\n");
 
     // concurrent deletion
+    printf("[START] deletion.\n");
     setTime(&startTime);
 
     deleteKernel<<<blockNum, blockSize, smemSize>>>(d_heap, heapItems, auxItems, arrayNum, batchSize);
@@ -150,6 +151,7 @@ int main(int argc, char *argv[])
     gpuErrchk(cudaDeviceSynchronize());
 
     setTime(&endTime);
+    printf("[END] deletion.\n");
     deleteTime = getTime(&startTime, &endTime);
 
     printf("%s,insdel,%d,%d,%.2f,%.2f,%.2f\n",
