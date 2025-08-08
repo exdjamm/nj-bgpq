@@ -156,9 +156,10 @@ int main(int argc, char *argv[])
     printf("[END] deletion.\n");
     deleteTime = getTime(&startTime, &endTime);
 
-    printf("%s,insdel,%d,%d,%.2f,%.2f,%.2f\n",
-           argv[0],
-           keyType, arrayNum, insertTime, deleteTime, insertTime + deleteTime);
+    printf("array_number: %d\n", arrayNum);
+    printf("insertion_time: %.3f\n", insertTime);
+    printf("deletion_time: %.3f\n", deleteTime);
+    printf("total_time: %.3f\n", insertTime + deleteTime);
 
     cudaFree(heapItems);
     cudaFree(auxItems);
